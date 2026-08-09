@@ -35,4 +35,4 @@ document.getElementById("signup").onsubmit=async e=>{e.preventDefault();const ph
 document.getElementById("login").onsubmit=async e=>{e.preventDefault();const phone=normalizePhone(document.getElementById("le").value),password=document.getElementById("lp").value;status("ls","Memeriksa akun...",true);const {data,error}=await sb.auth.signInWithPassword({phone,password});if(error)return status("ls","Nomor telepon atau password salah.",false);status("ls","Berhasil masuk. Membuka Beranda...",true);showLoggedIn(data.user)};
 async function logout(){await sb.auth.signOut();document.getElementById("appSection").classList.remove("active");document.getElementById("authSection").style.display="";document.getElementById("landingSection").style.display="";setMode("login");window.scrollTo({top:0,behavior:"smooth"})}
 (async()=>{const {data}=await sb.auth.getSession();if(data.session)showLoggedIn(data.session.user)})();
-</script></body></html>
+</script></body></html> 
