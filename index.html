@@ -23,16 +23,297 @@
 <section id="landingSection" class="section"><div class="hero"><div><h1>Temukan <span class="grad">beauty</span> terbaik untukmu.</h1><p class="muted">BeautyHaul membantu kamu menikmati pengalaman beauty yang praktis — mulai dari akun, pesanan, hingga layanan kecantikan dalam satu tempat.</p><p>💄 Beauty &nbsp; 🛍️ Belanja &nbsp; ✨ Perawatan &nbsp; 💗 Personal</p></div><div class="heroCard"><div class="inner"><h2>Beauty yang lebih sederhana.</h2><p class="muted">Daftar gratis untuk mulai menggunakan BeautyHaul.</p><button class="btn" onclick="setMode('signup');document.getElementById('authSection').scrollIntoView({behavior:'smooth'})">Buat akun sekarang</button></div></div></div></section>
 </main><footer>© 2026 BeautyHaul · Beauty Super App</footer>
 <script>
-const sb=window.supabase.createClient("https://gjpzzcdsmkdpbbeklcbq.supabase.co","sb_publishable_d27_xupd2CBxXYe9GBMVAA_Af-7mhI3");
-function status(id,msg,ok){const e=document.getElementById(id);e.textContent=msg;e.className="status show "+(ok?"ok":"err")}
-function normalizePhone(v){let p=v.replace(/\s+/g,"").replace(/-/g,"");if(p.startsWith("08"))p="+62"+p.slice(1);if(p.startsWith("62"))p="+"+p;return p}
-function setMode(mode){const login=mode==="login";document.getElementById("login").classList.toggle("active",login);document.getElementById("signup").classList.toggle("active",!login);document.getElementById("loginTab").classList.toggle("active",login);document.getElementById("signupTab").classList.toggle("active",!login);document.getElementById("authTitle").textContent=login?"Masuk ke akun":"Buat akun";document.getElementById("authSubtitle").textContent=login?"Gunakan nomor telepon dan password kamu.":"Daftar dengan nomor telepon dan buat PIN Penarikan.";document.getElementById("ls").className="status";document.getElementById("ss").className="status"}
-function showApp(){document.getElementById("authSection").style.display="none";document.getElementById("landingSection").style.display="none";document.getElementById("appSection").classList.add("active")}
-function showAuth(){document.getElementById("appSection").classList.remove("active");document.getElementById("authSection").style.display="";document.getElementById("landingSection").style.display="";document.getElementById("authSection").scrollIntoView({behavior:"smooth"})}
-function showLoggedIn(user){document.getElementById("welcomeText").textContent="Halo, "+(user?.user_metadata?.full_name||"BeautyHaul user")+"! Kamu sudah masuk.";showApp()}
-async function hashPin(pin){const data=new TextEncoder().encode(pin);const hash=await crypto.subtle.digest("SHA-256",data);return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,"0")).join("")}
-document.getElementById("signup").onsubmit=async e=>{e.preventDefault();const phone=normalizePhone(document.getElementById("se").value),name=document.getElementById("fullName").value.trim(),password=document.getElementById("sp").value,pin=document.getElementById("pin").value;if(!/^\+[1-9]\d{7,14}$/.test(phone))return status("ss","Nomor telepon tidak valid.",false);if(!/^\d{6}$/.test(pin))return status("ss","PIN Penarikan harus tepat 6 digit.",false);status("ss","Membuat akun...",true);const pinHash=await hashPin(pin);const {data,error}=await sb.auth.signUp({phone,password,options:{data:{full_name:name,pin_penarikan_hash:pinHash}}});if(error)return status("ss",error.message,false);if(data.session){status("ss","Akun berhasil dibuat. Membuka Beranda...",true);showLoggedIn(data.user);e.target.reset()}else status("ss","Akun dibuat, tetapi Supabase masih meminta konfirmasi nomor telepon. Matikan Phone Confirmation di Supabase agar tanpa SMS/OTP dan langsung masuk.",false)};
-document.getElementById("login").onsubmit=async e=>{e.preventDefault();const phone=normalizePhone(document.getElementById("le").value),password=document.getElementById("lp").value;status("ls","Memeriksa akun...",true);const {data,error}=await sb.auth.signInWithPassword({phone,password});if(error)return status("ls","Nomor telepon atau password salah.",false);status("ls","Berhasil masuk. Membuka Beranda...",true);showLoggedIn(data.user)};
-async function logout(){await sb.auth.signOut();document.getElementById("appSection").classList.remove("active");document.getElementById("authSection").style.display="";document.getElementById("landingSection").style.display="";setMode("login");window.scrollTo({top:0,behavior:"smooth"})}
-(async()=>{const {data}=await sb.auth.getSession();if(data.session)showLoggedIn(data.session.user)})();
+const sb = window.supabase.createClient(
+  "https://gjpzzcdsmkdpbbeklcbq.supabase.co",
+  "sb_publishable_d27_xupd2CBxXYe9GBMVAA_Af-7mhI3"
+);
+
+function status(id, msg, ok) {
+  const e = document.getElementById(id);
+  e.textContent = msg;
+  e.className = "status show " + (ok ? "ok" : "err");
+}
+
+function normalizePhone(v) {
+  let p = v.replace(/\s+/g, "").replace(/-/g, "");
+
+  if (p.startsWith("08")) p = "+62" + p.slice(1);
+  if (p.startsWith("62")) p = "+" + p;
+
+  return p;
+}
+
+/*
+  Nomor HP diubah menjadi email internal.
+  Pengguna TIDAK perlu mengetahui email ini.
+*/
+function phoneToEmail(phone) {
+  return phone.replace("+", "") + "@beautyhaul.app";
+}
+
+function setMode(mode) {
+  const login = mode === "login";
+
+  document.getElementById("login").classList.toggle("active", login);
+  document.getElementById("signup").classList.toggle("active", !login);
+
+  document.getElementById("loginTab").classList.toggle("active", login);
+  document.getElementById("signupTab").classList.toggle("active", !login);
+
+  document.getElementById("authTitle").textContent =
+    login ? "Masuk ke akun" : "Buat akun";
+
+  document.getElementById("authSubtitle").textContent =
+    login
+      ? "Gunakan nomor telepon dan password kamu."
+      : "Daftar dengan nomor telepon dan buat PIN Penarikan.";
+
+  document.getElementById("ls").className = "status";
+  document.getElementById("ss").className = "status";
+}
+
+function showApp() {
+  document.getElementById("authSection").style.display = "none";
+  document.getElementById("landingSection").style.display = "none";
+  document.getElementById("appSection").classList.add("active");
+}
+
+function showAuth() {
+  document.getElementById("appSection").classList.remove("active");
+  document.getElementById("authSection").style.display = "";
+  document.getElementById("landingSection").style.display = "";
+
+  document
+    .getElementById("authSection")
+    .scrollIntoView({ behavior: "smooth" });
+}
+
+function showLoggedIn(user) {
+  document.getElementById("welcomeText").textContent =
+    "Halo, " +
+    (user?.user_metadata?.full_name || "BeautyHaul user") +
+    "! Kamu sudah masuk.";
+
+  showApp();
+}
+
+async function hashPin(pin) {
+  const data = new TextEncoder().encode(pin);
+  const hash = await crypto.subtle.digest("SHA-256", data);
+
+  return Array.from(new Uint8Array(hash))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+
+/* =========================
+   DAFTAR
+========================= */
+
+document.getElementById("signup").onsubmit = async e => {
+  e.preventDefault();
+
+  const phone = normalizePhone(
+    document.getElementById("se").value
+  );
+
+  const name = document
+    .getElementById("fullName")
+    .value
+    .trim();
+
+  const password = document.getElementById("sp").value;
+  const pin = document.getElementById("pin").value;
+
+  if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
+    return status(
+      "ss",
+      "Nomor telepon tidak valid.",
+      false
+    );
+  }
+
+  if (password.length < 6) {
+    return status(
+      "ss",
+      "Password minimal 6 karakter.",
+      false
+    );
+  }
+
+  if (!/^\d{6}$/.test(pin)) {
+    return status(
+      "ss",
+      "PIN Penarikan harus tepat 6 digit.",
+      false
+    );
+  }
+
+  status("ss", "Membuat akun...", true);
+
+  try {
+    const email = phoneToEmail(phone);
+    const pinHash = await hashPin(pin);
+
+    const { data, error } = await sb.auth.signUp({
+      email: email,
+      password: password,
+      options: {
+        data: {
+          full_name: name,
+          phone_number: phone,
+          pin_penarikan_hash: pinHash
+        }
+      }
+    });
+
+    if (error) {
+      console.error(error);
+
+      if (
+        error.message.toLowerCase().includes("already registered") ||
+        error.message.toLowerCase().includes("already been registered")
+      ) {
+        return status(
+          "ss",
+          "Nomor telepon tersebut sudah terdaftar.",
+          false
+        );
+      }
+
+      return status(
+        "ss",
+        error.message,
+        false
+      );
+    }
+
+    if (data.session) {
+      status(
+        "ss",
+        "Akun berhasil dibuat. Membuka Beranda...",
+        true
+      );
+
+      showLoggedIn(data.user);
+      e.target.reset();
+
+    } else {
+      status(
+        "ss",
+        "Akun dibuat, tetapi sesi belum tersedia. Periksa pengaturan Confirm email di Supabase.",
+        false
+      );
+    }
+
+  } catch (err) {
+    console.error(err);
+
+    status(
+      "ss",
+      "Terjadi kesalahan saat membuat akun.",
+      false
+    );
+  }
+};
+
+
+/* =========================
+   LOGIN
+========================= */
+
+document.getElementById("login").onsubmit = async e => {
+  e.preventDefault();
+
+  const phone = normalizePhone(
+    document.getElementById("le").value
+  );
+
+  const password =
+    document.getElementById("lp").value;
+
+  if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
+    return status(
+      "ls",
+      "Nomor telepon tidak valid.",
+      false
+    );
+  }
+
+  status("ls", "Memeriksa akun...", true);
+
+  try {
+    const email = phoneToEmail(phone);
+
+    const { data, error } =
+      await sb.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
+
+    if (error) {
+      console.error(error);
+
+      return status(
+        "ls",
+        "Nomor telepon atau password salah.",
+        false
+      );
+    }
+
+    status(
+      "ls",
+      "Berhasil masuk. Membuka Beranda...",
+      true
+    );
+
+    showLoggedIn(data.user);
+
+  } catch (err) {
+    console.error(err);
+
+    status(
+      "ls",
+      "Terjadi kesalahan saat masuk.",
+      false
+    );
+  }
+};
+
+
+/* =========================
+   LOGOUT
+========================= */
+
+async function logout() {
+  await sb.auth.signOut();
+
+  document
+    .getElementById("appSection")
+    .classList.remove("active");
+
+  document.getElementById("authSection").style.display = "";
+  document.getElementById("landingSection").style.display = "";
+
+  setMode("login");
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
+
+
+/* =========================
+   CEK SESI
+========================= */
+
+(async () => {
+  const { data } = await sb.auth.getSession();
+
+  if (data.session) {
+    showLoggedIn(data.session.user);
+  }
+})();
 </script></body></html> 
