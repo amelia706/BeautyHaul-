@@ -19,8 +19,107 @@
 <form id="signup" class="authForm"><label>Nama lengkap</label><input id="fullName" required placeholder="Nama lengkap"><label>Nomor telepon</label><input id="se" type="tel" required placeholder="Contoh: 081234567890"><label>Password</label><input id="sp" type="password" minlength="6" required placeholder="Minimal 6 karakter"><label>PIN Penarikan</label><input id="pin" type="password" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" required placeholder="6 digit"><button class="btn">Daftar</button></form>
 <div id="ls" class="status"></div><div id="ss" class="status"></div></div></section>
 <section id="appSection" class="app">
-<div class="welcome"><h1 style="font-size:clamp(30px,6vw,48px)">Selamat datang di BeautyHaul ✨</h1><p id="welcomeText">Beranda aplikasi kamu.</p></div><button class="btn secondary" onclick="logout()">Keluar</button></section>
-<section id="landingSection" class="section"><div class="hero"><div><h1>Temukan <span class="grad">beauty</span> terbaik untukmu.</h1><p class="muted">BeautyHaul membantu kamu menikmati pengalaman beauty yang praktis — mulai dari akun, pesanan, hingga layanan kecantikan dalam satu tempat.</p><p>💄 Beauty &nbsp; 🛍️ Belanja &nbsp; ✨ Perawatan &nbsp; 💗 Personal</p></div><div class="heroCard"><div class="inner"><h2>Beauty yang lebih sederhana.</h2><p class="muted">Daftar gratis untuk mulai menggunakan BeautyHaul.</p><button class="btn" onclick="setMode('signup');document.getElementById('authSection').scrollIntoView({behavior:'smooth'})">Buat akun sekarang</button></div></div></div></section>
+
+  <div style="padding:20px;background:#fff;min-height:100vh">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div>
+        <h2 style="margin:0;color:#222">BeautyHaul ✨</h2>
+        <p id="dashboardUser" style="margin:5px 0;color:#777">Selamat datang</p>
+      </div>
+      <button onclick="logout()"
+        style="border:0;background:#f3e8f5;padding:10px 14px;border-radius:12px">
+        Keluar
+      </button>
+    </div>
+
+    <div style="background:linear-gradient(135deg,#e83291,#914bea);
+                color:white;border-radius:22px;padding:22px;margin-bottom:20px">
+      <p style="margin:0 0 8px;font-size:14px">Saldo BeautyHaul</p>
+      <h1 style="margin:0;font-size:30px">Rp 0</h1>
+      <div style="display:flex;gap:10px;margin-top:18px">
+        <button style="flex:1;padding:12px;border:0;border-radius:12px">
+          + Tambah Saldo
+        </button>
+        <button style="flex:1;padding:12px;border:0;border-radius:12px">
+          Tarik Dana
+        </button>
+      </div>
+    </div>
+
+    <h3 style="color:#222">Menu Utama</h3>
+
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
+
+      <button style="padding:20px;border:1px solid #eee;border-radius:18px;background:white">
+        🛍️<br><b>Produk</b>
+      </button>
+
+      <button style="padding:20px;border:1px solid #eee;border-radius:18px;background:white">
+        📦<br><b>Pesanan</b>
+      </button>
+
+      <button style="padding:20px;border:1px solid #eee;border-radius:18px;background:white">
+        💰<br><b>Dompet</b>
+      </button>
+
+      <button style="padding:20px;border:1px solid #eee;border-radius:18px;background:white">
+        🎁<br><b>Bonus</b>
+      </button>
+
+      <button style="padding:20px;border:1px solid #eee;border-radius:18px;background:white">
+        🏦<br><b>Rekening</b>
+      </button>
+
+      <button style="padding:20px;border:1px solid #eee;border-radius:18px;background:white">
+        👤<br><b>Akun Saya</b>
+      </button>
+
+    </div>
+
+    <h3 style="margin-top:28px;color:#222">Aktivitas Terbaru</h3>
+
+    <div style="padding:18px;border:1px solid #eee;border-radius:18px">
+      <p style="margin:0;color:#777">
+        Belum ada transaksi.
+      </p>
+    </div>
+
+    <div style="height:80px"></div>
+
+    <div style="
+      position:fixed;
+      bottom:0;
+      left:0;
+      right:0;
+      background:white;
+      border-top:1px solid #eee;
+      display:flex;
+      justify-content:space-around;
+      padding:10px 5px;
+      z-index:99">
+
+      <button style="border:0;background:none">
+        🏠<br><small>Beranda</small>
+      </button>
+
+      <button style="border:0;background:none">
+        📦<br><small>Pesanan</small>
+      </button>
+
+      <button style="border:0;background:none">
+        💰<br><small>Dompet</small>
+      </button>
+
+      <button style="border:0;background:none">
+        👤<br><small>Akun</small>
+      </button>
+
+    </div>
+
+  </div>
+
+</section><section id="landingSection" class="section"><div class="hero"><div><h1>Temukan <span class="grad">beauty</span> terbaik untukmu.</h1><p class="muted">BeautyHaul membantu kamu menikmati pengalaman beauty yang praktis — mulai dari akun, pesanan, hingga layanan kecantikan dalam satu tempat.</p><p>💄 Beauty &nbsp; 🛍️ Belanja &nbsp; ✨ Perawatan &nbsp; 💗 Personal</p></div><div class="heroCard"><div class="inner"><h2>Beauty yang lebih sederhana.</h2><p class="muted">Daftar gratis untuk mulai menggunakan BeautyHaul.</p><button class="btn" onclick="setMode('signup');document.getElementById('authSection').scrollIntoView({behavior:'smooth'})">Buat akun sekarang</button></div></div></div></section>
 </main><footer>© 2026 BeautyHaul · Beauty Super App</footer>
 <script>
 const sb = window.supabase.createClient(
