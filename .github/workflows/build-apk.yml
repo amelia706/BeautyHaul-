@@ -1,4 +1,4 @@
-name: Build BeautyHaul APK
+name: Build BeautyHaul APK V2
 
 on:
   workflow_dispatch:
@@ -15,187 +15,60 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Java
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Find project ZIP
+      - name: Find and extract Android project
+        shell: bash
         run: |
-          ZIP_FILE=$(find . -maxdepth 1 -type f -name "*.zip" | head -n 1)
+          set -e
+
+          ZIP_FILE=$(find . -maxdepth 1 -type f -name "BeautyHaul-Android-Project-FIX-v2*.zip" | head -n 1)
+
           if [ -z "$ZIP_FILE" ]; then
-            echo "ZIP project tidak ditemukan."
-            exit 1
-          fi
-          echo "ZIP ditemukan: $ZIP_FILE"
-          echo "ZIP_FILE=$ZIP_FILE" >> "$GITHUB_ENV"
-
-      - name: Extract project
-        run: |
-          mkdir -p websrc
-          unzip -o "$ZIP_FILE" -d websrc
-
-      - name: Find website files
-        run: |
-          INDEX=$(find websrc -type f -name "index.html" | head -n 1)
-
-          if [ -z "$INDEX" ]; then
-            echo "index.html tidak ditemukan."
+            echo "ZIP project V2 tidak ditemukan."
             exit 1
           fi
 
-          ROOT=$(dirname "$INDEX")
-          echo "Website ditemukan di: $ROOT"
-          echo "WEB_ROOT=$ROOT" >> "$GITHUB_ENV"
+          echo "Menggunakan: $ZIP_FILE"
 
-      - name: Create Android project
-        run: |
-          mkdir -p app/src/main/java/com/beautyhaul/app
-          mkdir -p app/src/main/assets
+          mkdir -p android-project
+          unzip -q "$ZIP_FILE" -d android-project
 
-          cp -R "$WEB_ROOT"/. app/src/main/assets/
+          PROJECT_DIR=$(find android-project -maxdepth 2 -type f -name "settings.gradle" -printf '%h\n' | head -n 1)
 
-          cat > settings.gradle <<'EOF'
-          pluginManagement {
-              repositories {
-                  google()
-                  mavenCentral()
-                  gradlePluginPortal()
-              }
-          }
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "Folder project Android tidak ditemukan."
+            exit 1
+          fi
 
-          dependencyResolutionManagement {
-              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-          }
-
-          rootProject.name = "BeautyHaul"
-          include(":app")
-          EOF
-
-          cat > build.gradle <<'EOF'
-          plugins {
-              id 'com.android.application' version '8.6.1' apply false
-          }
-          EOF
-
-          cat > app/build.gradle <<'EOF'
-          plugins {
-              id 'com.android.application'
-          }
-
-          android {
-              namespace 'com.beautyhaul.app'
-              compileSdk 35
-
-              defaultConfig {
-                  applicationId 'com.beautyhaul.app'
-                  minSdk 23
-                  targetSdk 35
-                  versionCode 1
-                  versionName '1.0'
-              }
-          }
-          EOF
-
-          cat > app/src/main/AndroidManifest.xml <<'EOF'
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
-              <uses-permission android:name="android.permission.INTERNET"/>
-
-              <application
-                  android:theme="@style/AppTheme"
-                  android:label="BeautyHaul"
-                  android:usesCleartextTraffic="true"
-                  android:allowBackup="false"
-                  android:supportsRtl="true">
-
-                  <activity
-                      android:name=".MainActivity"
-                      android:exported="true">
-
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN"/>
-                          <category android:name="android.intent.category.LAUNCHER"/>
-                      </intent-filter>
-
-                  </activity>
-
-              </application>
-
-          </manifest>
-          EOF
-
-          mkdir -p app/src/main/res/values
-
-          cat > app/src/main/res/values/styles.xml <<'EOF'
-          <resources>
-              <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
-                  <item name="android:fontFamily">sans</item>
-                  <item name="android:colorAccent">#1976D2</item>
-                  <item name="android:navigationBarColor">#000000</item>
-                  <item name="android:statusBarColor">#1565C0</item>
-                  <item name="android:windowLightStatusBar">false</item>
-              </style>
-          </resources>
-          EOF
-
-          cat > app/src/main/java/com/beautyhaul/app/MainActivity.kt <<'EOF'
-          package com.beautyhaul.app
-
-          import android.app.Activity
-          import android.os.Bundle
-          import android.webkit.WebView
-          import android.webkit.WebViewClient
-
-          class MainActivity : Activity() {
-
-              private lateinit var webView: WebView
-
-              override fun onCreate(savedInstanceState: Bundle?) {
-                  super.onCreate(savedInstanceState)
-
-                  webView = WebView(this)
-
-                  webView.settings.javaScriptEnabled = true
-                  webView.settings.domStorageEnabled = true
-                  webView.settings.allowFileAccess = true
-                  webView.settings.allowContentAccess = true
-
-                  webView.webViewClient = WebViewClient()
-
-                  setContentView(webView)
-
-                  webView.loadUrl("file:///android_asset/index.html")
-              }
-
-              override fun onBackPressed() {
-                  if (webView.canGoBack()) {
-                      webView.goBack()
-                  } else {
-                      super.onBackPressed()
-                  }
-              }
-          }
-          EOF
+          echo "Project: $PROJECT_DIR"
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Build APK
+        shell: bash
         run: |
-          gradle wrapper --gradle-version 8.7
-          ./gradlew assembleDebug
+          set -e
 
-      - name: Upload APK
+          wget -q https://services.gradle.org/distributions/gradle-9.6.1-bin.zip
+          unzip -q gradle-9.6.1-bin.zip
+
+          echo "$PWD/gradle-9.6.1/bin" >> "$GITHUB_PATH"
+
+      - name: Build Debug APK
+        shell: bash
+        run: |
+          set -e
+          cd "$PROJECT_DIR"
+
+          gradle --no-daemon clean assembleDebug
+
+      - name: Upload BeautyHaul APK
         uses: actions/upload-artifact@v4
         with:
-          name: BeautyHaul-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: BeautyHaul-APK-V2
+          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
