@@ -1,4 +1,4 @@
-name: Build BeautyHaul APK V2
+name: Build BeautyHaul APK V3
 
 on:
   workflow_dispatch:
@@ -21,54 +21,47 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Find and extract Android project
+      - name: Find and extract BeautyHaul V3
         shell: bash
         run: |
           set -e
 
-          ZIP_FILE=$(find . -maxdepth 1 -type f -name "BeautyHaul-Android-Project-FIX-v2*.zip" | head -n 1)
+          ZIP_FILE=$(find . -maxdepth 1 -type f -name "BeautyHaul-Android-Project-FIX-v3*.zip" | head -n 1)
 
           if [ -z "$ZIP_FILE" ]; then
-            echo "ZIP project V2 tidak ditemukan."
+            echo "ERROR: BeautyHaul V3 ZIP tidak ditemukan."
             exit 1
           fi
 
-          echo "Menggunakan: $ZIP_FILE"
+          echo "Menggunakan file: $ZIP_FILE"
 
           mkdir -p android-project
           unzip -q "$ZIP_FILE" -d android-project
 
-          PROJECT_DIR=$(find android-project -maxdepth 2 -type f -name "settings.gradle" -printf '%h\n' | head -n 1)
+          PROJECT_DIR=$(find android-project -maxdepth 3 -type f -name "settings.gradle" -printf '%h\n' | head -n 1)
 
           if [ -z "$PROJECT_DIR" ]; then
-            echo "Folder project Android tidak ditemukan."
+            echo "ERROR: settings.gradle tidak ditemukan."
             exit 1
           fi
 
-          echo "Project: $PROJECT_DIR"
+          echo "Project Android ditemukan di: $PROJECT_DIR"
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
-
-      - name: Setup Gradle
-        shell: bash
-        run: |
-          set -e
-
-          wget -q https://services.gradle.org/distributions/gradle-9.6.1-bin.zip
-          unzip -q gradle-9.6.1-bin.zip
-
-          echo "$PWD/gradle-9.6.1/bin" >> "$GITHUB_PATH"
 
       - name: Build Debug APK
         shell: bash
         run: |
           set -e
+
           cd "$PROJECT_DIR"
 
-          gradle --no-daemon clean assembleDebug
+          chmod +x gradlew
+
+          ./gradlew --no-daemon clean assembleDebug
 
       - name: Upload BeautyHaul APK
         uses: actions/upload-artifact@v4
         with:
-          name: BeautyHaul-APK-V2
+          name: BeautyHaul-APK-V3
           path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
